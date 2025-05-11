@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { X, Download, Share2 } from 'lucide-react-native';
 import { format } from 'date-fns';
 import * as Print from 'expo-print';
@@ -44,7 +44,7 @@ export default function InvoicePreview({ visible, onClose, data }: InvoicePrevie
             <div style="display: flex; align-items: center;">
               ${product.image_url ? `
                 <img src="${product.image_url}" 
-                     style="width: 40px; height: 40px; border-radius: 4px; margin-right: 12px;" />
+                     style="width: 40px; height: 40px; border-radius: 4px; margin-right: 12px; object-fit: cover;" />
               ` : ''}
               <span style="font-family: ${theme.fontFamily};">${product.name}</span>
             </div>
@@ -137,7 +137,7 @@ export default function InvoicePreview({ visible, onClose, data }: InvoicePrevie
             <div style="${logoStyle} margin-bottom: 40px;">
               ${logoHtml}
               <h1 style="color: ${theme.primaryColor}; font-size: 32px; margin-bottom: 8px; font-family: ${theme.fontFamily};">
-                ${businessInfo?.business_name}
+                ${businessInfo?.business_name || ''}
               </h1>
               ${businessInfo?.address ? `
                 <p style="color: #666666; margin: 0; font-family: ${theme.fontFamily};">
@@ -193,17 +193,7 @@ export default function InvoicePreview({ visible, onClose, data }: InvoicePrevie
     try {
       const html = generateHtml();
       const { uri } = await Print.printToFileAsync({ html });
-      
-      if (Platform.OS === 'ios' || Platform.OS === 'android') {
-        await Sharing.shareAsync(uri);
-      } else {
-        const blob = await (await fetch(uri)).blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `invoice-${data.customerName}-${format(new Date(data.dueDate), 'yyyy-MM-dd')}.pdf`;
-        a.click();
-      }
+      await Sharing.shareAsync(uri);
     } catch (error) {
       console.error('Error sharing invoice:', error);
     }
@@ -235,9 +225,11 @@ export default function InvoicePreview({ visible, onClose, data }: InvoicePrevie
               {businessInfo?.logo_url && (
                 <Image source={{ uri: businessInfo.logo_url }} style={styles.logo} />
               )}
-              <Text style={[styles.businessName, { color: theme.primaryColor, fontFamily: theme.fontFamily }]}>
-                {businessInfo?.business_name}
-              </Text>
+              {businessInfo?.business_name && (
+                <Text style={[styles.businessName, { color: theme.primaryColor, fontFamily: theme.fontFamily }]}>
+                  {businessInfo.business_name}
+                </Text>
+              )}
               {businessInfo?.address && (
                 <Text style={[styles.businessAddress, { fontFamily: theme.fontFamily }]}>
                   {businessInfo.address}

@@ -43,9 +43,11 @@ export default function TemplatePreview({ data }: TemplatePreviewProps) {
               style={styles.logo}
             />
           )}
-          <Text style={[styles.businessName, { color: theme.primaryColor, fontFamily: theme.fontFamily }]}>
-            {businessInfo?.business_name}
-          </Text>
+          {businessInfo?.business_name && (
+            <Text style={[styles.businessName, { color: theme.primaryColor, fontFamily: theme.fontFamily }]}>
+              {businessInfo.business_name}
+            </Text>
+          )}
         </View>
 
         <View style={styles.customerSection}>
