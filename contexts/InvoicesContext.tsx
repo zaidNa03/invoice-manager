@@ -4,7 +4,9 @@ import { useAuthContext } from '@/contexts/AuthContext';
 import type { Tables } from '@/lib/supabase';
 
 type Invoice = Tables['invoices']['Row'];
-type InvoiceItem = Tables['invoice_items']['Row'];
+type InvoiceItem = Tables['invoice_items']['Row'] & {
+  product_image_url?: string;
+};
 
 interface InvoiceWithItems extends Invoice {
   items: InvoiceItem[];
@@ -64,14 +66,24 @@ export function InvoicesProvider({ children }: { children: ReactNode }) {
       for (const invoice of invoicesData || []) {
         const { data: itemsData, error: itemsError } = await supabase
           .from('invoice_items')
-          .select('*')
+          .select(`
+            *,
+            products (
+              image_url
+            )
+          `)
           .eq('invoice_id', invoice.id);
 
         if (itemsError) throw itemsError;
 
+        const items = itemsData.map(item => ({
+          ...item,
+          product_image_url: item.products?.image_url
+        }));
+
         invoicesWithItems.push({
           ...invoice,
-          items: itemsData || [],
+          items,
         });
       }
 

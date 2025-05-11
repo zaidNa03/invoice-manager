@@ -3,6 +3,7 @@ import { ChevronRight, Globe, DollarSign, Building2, Palette, Camera } from 'luc
 import { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { useBusinessContext } from '@/contexts/BusinessContext';
+import { useTemplate, TemplateTheme } from '@/contexts/TemplateContext';
 
 const currencies = [
   { code: 'USD', symbol: '$', name: 'US Dollar' },
@@ -18,9 +19,28 @@ const taxRates = [
   { value: 20, label: '20%' },
 ];
 
+const layouts = [
+  { value: 'compact', label: 'Compact' },
+  { value: 'standard', label: 'Standard' },
+  { value: 'detailed', label: 'Detailed' },
+];
+
+const logoPositions = [
+  { value: 'left', label: 'Left' },
+  { value: 'right', label: 'Right' },
+  { value: 'center', label: 'Center' },
+];
+
+const fonts = [
+  { value: 'Inter-Regular', label: 'Inter' },
+  { value: 'PlusJakartaSans-Medium', label: 'Plus Jakarta Sans' },
+];
+
 export default function SettingsScreen() {
   const { businessInfo, loading, error, updateBusinessInfo } = useBusinessContext();
+  const { theme, updateTheme, loading: templateLoading } = useTemplate();
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingTemplate, setIsEditingTemplate] = useState(false);
   const [formData, setFormData] = useState({
     business_name: businessInfo?.business_name || '',
     address: businessInfo?.address || '',
@@ -31,6 +51,7 @@ export default function SettingsScreen() {
     default_currency: businessInfo?.default_currency || 'USD',
     tax_rate: businessInfo?.tax_rate || 10,
   });
+  const [templateData, setTemplateData] = useState<TemplateTheme>(theme);
   const [saving, setSaving] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
 
@@ -63,10 +84,168 @@ export default function SettingsScreen() {
     }
   };
 
-  if (loading) {
+  const handleSaveTemplate = async () => {
+    try {
+      setSaving(true);
+      setUpdateError(null);
+      await updateTheme(templateData);
+      setIsEditingTemplate(false);
+    } catch (err) {
+      setUpdateError('Failed to update template settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading || templateLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
+      </View>
+    );
+  }
+
+  if (isEditingTemplate) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Invoice Template</Text>
+          <TouchableOpacity 
+            style={[styles.saveButton, saving && styles.saveButtonDisabled]} 
+            onPress={handleSaveTemplate}
+            disabled={saving}
+          >
+            <Text style={styles.saveButtonText}>
+              {saving ? 'Saving...' : 'Save'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView style={styles.content}>
+          {updateError && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{updateError}</Text>
+            </View>
+          )}
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Colors</Text>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Primary Color</Text>
+              <TextInput
+                style={[styles.input, { backgroundColor: templateData.primaryColor }]}
+                value={templateData.primaryColor}
+                onChangeText={(color) => setTemplateData(prev => ({ ...prev, primaryColor: color }))}
+                placeholder="#007AFF"
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Secondary Color</Text>
+              <TextInput
+                style={[styles.input, { backgroundColor: templateData.secondaryColor }]}
+                value={templateData.secondaryColor}
+                onChangeText={(color) => setTemplateData(prev => ({ ...prev, secondaryColor: color }))}
+                placeholder="#f8f9fa"
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Accent Color</Text>
+              <TextInput
+                style={[styles.input, { backgroundColor: templateData.accentColor }]}
+                value={templateData.accentColor}
+                onChangeText={(color) => setTemplateData(prev => ({ ...prev, accentColor: color }))}
+                placeholder="#34C759"
+              />
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Layout</Text>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Template Style</Text>
+              <View style={styles.optionsGrid}>
+                {layouts.map((layout) => (
+                  <TouchableOpacity
+                    key={layout.value}
+                    style={[
+                      styles.optionButton,
+                      templateData.layout === layout.value && styles.optionButtonActive
+                    ]}
+                    onPress={() => setTemplateData(prev => ({ ...prev, layout: layout.value as TemplateTheme['layout'] }))}
+                  >
+                    <Text 
+                      style={[
+                        styles.optionText,
+                        templateData.layout === layout.value && styles.optionTextActive
+                      ]}
+                    >
+                      {layout.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Logo Position</Text>
+              <View style={styles.optionsGrid}>
+                {logoPositions.map((position) => (
+                  <TouchableOpacity
+                    key={position.value}
+                    style={[
+                      styles.optionButton,
+                      templateData.logoPosition === position.value && styles.optionButtonActive
+                    ]}
+                    onPress={() => setTemplateData(prev => ({ ...prev, logoPosition: position.value as TemplateTheme['logoPosition'] }))}
+                  >
+                    <Text 
+                      style={[
+                        styles.optionText,
+                        templateData.logoPosition === position.value && styles.optionTextActive
+                      ]}
+                    >
+                      {position.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Typography</Text>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Font Family</Text>
+              <View style={styles.optionsGrid}>
+                {fonts.map((font) => (
+                  <TouchableOpacity
+                    key={font.value}
+                    style={[
+                      styles.optionButton,
+                      templateData.fontFamily === font.value && styles.optionButtonActive
+                    ]}
+                    onPress={() => setTemplateData(prev => ({ ...prev, fontFamily: font.value }))}
+                  >
+                    <Text 
+                      style={[
+                        styles.optionText,
+                        templateData.fontFamily === font.value && styles.optionTextActive,
+                        { fontFamily: font.value }
+                      ]}
+                    >
+                      {font.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </View>
+        </ScrollView>
       </View>
     );
   }
@@ -265,7 +444,10 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Invoice Settings</Text>
           
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity 
+            style={styles.settingItem}
+            onPress={() => setIsEditingTemplate(true)}
+          >
             <View style={styles.settingIcon}>
               <Palette size={20} color="#007AFF" />
             </View>
@@ -482,6 +664,30 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   taxRateTextActive: {
+    color: '#ffffff',
+  },
+  optionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  optionButton: {
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    minWidth: '30%',
+  },
+  optionButtonActive: {
+    backgroundColor: '#007AFF',
+  },
+  optionText: {
+    fontSize: 14,
+    fontFamily: 'Inter-SemiBold',
+    color: '#1a1a1a',
+    textAlign: 'center',
+  },
+  optionTextActive: {
     color: '#ffffff',
   },
 });

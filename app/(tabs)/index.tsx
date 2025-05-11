@@ -95,9 +95,9 @@ export default function InvoicesScreen() {
                 <ScrollView horizontal style={styles.productList} showsHorizontalScrollIndicator={false}>
                   {invoice.items.map((item) => (
                     <View key={item.id} style={styles.productItem}>
-                      {item.product_id && (
+                      {item.product_image_url && (
                         <Image 
-                          source={{ uri: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30' }} 
+                          source={{ uri: item.product_image_url }} 
                           style={styles.productImage} 
                         />
                       )}

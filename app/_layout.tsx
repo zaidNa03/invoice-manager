@@ -10,6 +10,7 @@ import { ProductsProvider } from '@/contexts/ProductsContext';
 import { BusinessProvider } from '@/contexts/BusinessContext';
 import { InvoicesProvider } from '@/contexts/InvoicesContext';
 import { CustomersProvider } from '@/contexts/CustomersContext';
+import { TemplateProvider } from '@/contexts/TemplateContext';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 
 export default function RootLayout() {
@@ -43,12 +44,14 @@ export default function RootLayout() {
         <CustomersProvider>
           <ProductsProvider>
             <InvoicesProvider>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="+not-found" options={{ title: 'Not Found' }} />
-              </Stack>
-              <StatusBar style="auto" />
+              <TemplateProvider>
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  <Stack.Screen name="+not-found" options={{ title: 'Not Found' }} />
+                </Stack>
+                <StatusBar style="auto" />
+              </TemplateProvider>
             </InvoicesProvider>
           </ProductsProvider>
         </CustomersProvider>

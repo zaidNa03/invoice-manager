@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Tables } from '@/lib/supabase';
+import { useAuthContext } from '@/contexts/AuthContext';
 
 type BusinessInfo = Tables['business_info']['Row'];
 
@@ -15,6 +16,7 @@ interface BusinessContextType {
 const BusinessContext = createContext<BusinessContextType | null>(null);
 
 export function BusinessProvider({ children }: { children: ReactNode }) {
+  const { session } = useAuthContext();
   const [businessInfo, setBusinessInfo] = useState<BusinessInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,13 +26,16 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       setError(null);
 
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
+      if (!session?.user) {
+        setError('No authenticated user');
+        setLoading(false);
+        return;
+      }
 
       const { data, error } = await supabase
         .from('business_info')
         .select('*')
-        .eq('user_id', userData.user.id)
+        .eq('user_id', session.user.id)
         .single();
 
       if (error) {
@@ -39,7 +44,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
           const { data: newData, error: createError } = await supabase
             .from('business_info')
             .insert([{
-              user_id: userData.user.id,
+              user_id: session.user.id,
               business_name: 'My Business',
               default_currency: 'USD'
             }])
@@ -87,8 +92,10 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    refreshBusinessInfo();
-  }, []);
+    if (session?.user) {
+      refreshBusinessInfo();
+    }
+  }, [session]);
 
   return (
     <BusinessContext.Provider

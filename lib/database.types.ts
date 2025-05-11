@@ -70,6 +70,44 @@ export interface Database {
           name?: string
         }
       }
+      customers: {
+        Row: {
+          id: string
+          user_id: string
+          first_name: string
+          last_name: string
+          gender: string | null
+          phone: string | null
+          address: string | null
+          email: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          first_name: string
+          last_name: string
+          gender?: string | null
+          phone?: string | null
+          address?: string | null
+          email?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          first_name?: string
+          last_name?: string
+          gender?: string | null
+          phone?: string | null
+          address?: string | null
+          email?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+      }
       invoice_items: {
         Row: {
           id: string
@@ -189,6 +227,44 @@ export interface Database {
           image_url?: string | null
           price?: number
           currency_code?: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+      }
+      template_settings: {
+        Row: {
+          id: string
+          user_id: string
+          primary_color: string
+          secondary_color: string
+          accent_color: string
+          font_family: string
+          layout: string
+          logo_position: string
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          primary_color?: string
+          secondary_color?: string
+          accent_color?: string
+          font_family?: string
+          layout?: string
+          logo_position?: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          primary_color?: string
+          secondary_color?: string
+          accent_color?: string
+          font_family?: string
+          layout?: string
+          logo_position?: string
           created_at?: string | null
           updated_at?: string | null
         }
