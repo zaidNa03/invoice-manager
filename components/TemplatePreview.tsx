@@ -64,7 +64,7 @@ export default function TemplatePreview({ data }: TemplatePreviewProps) {
 
         <View style={styles.itemsTable}>
           <View style={[styles.tableHeader, { backgroundColor: theme.primaryColor }]}>
-            <Text style={[styles.headerCell, { flex: 2, color: '#ffffff', fontFamily: theme.fontFamily }]}>Item</Text>
+            <Text style={[styles.headerCell, { flex: 3, color: '#ffffff', fontFamily: theme.fontFamily }]}>Item</Text>
             <Text style={[styles.headerCell, { flex: 1, color: '#ffffff', fontFamily: theme.fontFamily }]}>Qty</Text>
             <Text style={[styles.headerCell, { flex: 1, color: '#ffffff', fontFamily: theme.fontFamily }]}>Price</Text>
             <Text style={[styles.headerCell, { flex: 1, color: '#ffffff', fontFamily: theme.fontFamily }]}>Amount</Text>
@@ -72,7 +72,7 @@ export default function TemplatePreview({ data }: TemplatePreviewProps) {
 
           {data.items.map((item, index) => (
             <View key={index} style={styles.tableRow}>
-              <View style={[styles.itemCell, { flex: 2 }]}>
+              <View style={[styles.itemCell, { flex: 3 }]}>
                 {item.image_url && (
                   <Image source={{ uri: item.image_url }} style={styles.itemImage} />
                 )}
@@ -177,10 +177,12 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 4,
     marginRight: 12,
+    backgroundColor: '#f8f9fa',
   },
   itemName: {
     fontSize: 14,
     color: '#1a1a1a',
+    flex: 1,
   },
   cell: {
     fontSize: 14,

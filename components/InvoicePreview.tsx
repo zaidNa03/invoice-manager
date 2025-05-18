@@ -130,6 +130,29 @@ export default function InvoicePreview({ visible, onClose, data }: InvoicePrevie
               border-radius: 8px;
               box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 40px;
+            }
+            th {
+              background-color: ${theme.primaryColor};
+              color: #ffffff;
+              padding: 12px;
+              text-align: left;
+              font-family: ${theme.fontFamily};
+            }
+            td {
+              padding: 12px;
+              border-bottom: 1px solid ${theme.secondaryColor};
+            }
+            .product-image {
+              width: 40px;
+              height: 40px;
+              border-radius: 4px;
+              margin-right: 12px;
+              object-fit: cover;
+            }
           </style>
         </head>
         <body>
@@ -157,13 +180,13 @@ export default function InvoicePreview({ visible, onClose, data }: InvoicePrevie
               </p>
             </div>
 
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 40px;">
+            <table>
               <thead>
-                <tr style="background-color: ${theme.primaryColor};">
-                  <th style="padding: 12px; text-align: left; color: #ffffff; font-family: ${theme.fontFamily};">Item</th>
-                  <th style="padding: 12px; text-align: center; color: #ffffff; font-family: ${theme.fontFamily};">Quantity</th>
-                  <th style="padding: 12px; text-align: right; color: #ffffff; font-family: ${theme.fontFamily};">Price</th>
-                  <th style="padding: 12px; text-align: right; color: #ffffff; font-family: ${theme.fontFamily};">Amount</th>
+                <tr>
+                  <th style="width: 50%;">Item</th>
+                  <th style="width: 15%; text-align: center;">Quantity</th>
+                  <th style="width: 15%; text-align: right;">Price</th>
+                  <th style="width: 20%; text-align: right;">Amount</th>
                 </tr>
               </thead>
               <tbody>
@@ -193,7 +216,10 @@ export default function InvoicePreview({ visible, onClose, data }: InvoicePrevie
     try {
       const html = generateHtml();
       const { uri } = await Print.printToFileAsync({ html });
-      await Sharing.shareAsync(uri);
+      await Sharing.shareAsync(uri, {
+        UTI: '.pdf',
+        mimeType: 'application/pdf',
+      });
     } catch (error) {
       console.error('Error sharing invoice:', error);
     }
@@ -254,7 +280,7 @@ export default function InvoicePreview({ visible, onClose, data }: InvoicePrevie
 
             <View style={styles.itemsTable}>
               <View style={[styles.tableHeader, { backgroundColor: theme.primaryColor }]}>
-                <Text style={[styles.headerCell, { flex: 2, color: '#ffffff', fontFamily: theme.fontFamily }]}>
+                <Text style={[styles.headerCell, { flex: 3, color: '#ffffff', fontFamily: theme.fontFamily }]}>
                   Item
                 </Text>
                 <Text style={[styles.headerCell, { flex: 1, color: '#ffffff', fontFamily: theme.fontFamily }]}>
@@ -270,7 +296,7 @@ export default function InvoicePreview({ visible, onClose, data }: InvoicePrevie
 
               {data.products.map((product, index) => (
                 <View key={index} style={[styles.tableRow, { borderBottomColor: theme.secondaryColor }]}>
-                  <View style={[styles.itemCell, { flex: 2 }]}>
+                  <View style={[styles.itemCell, { flex: 3 }]}>
                     {product.image_url && (
                       <Image source={{ uri: product.image_url }} style={styles.itemImage} />
                     )}
@@ -456,10 +482,12 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 4,
     marginRight: 12,
+    backgroundColor: '#f8f9fa',
   },
   itemName: {
     fontSize: 14,
     color: '#1a1a1a',
+    flex: 1,
   },
   cell: {
     fontSize: 14,
