@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useInvoices } from '@/contexts/InvoicesContext';
 import { useBusinessContext } from '@/contexts/BusinessContext';
 import { Share2, Trash2, CircleCheck, Circle, Clock, Ban, Download } from 'lucide-react-native';
@@ -57,6 +57,7 @@ export default function InvoiceDetailsScreen() {
   const [error, setError] = useState<string | null>(null);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
 
   const invoice = invoices.find(inv => inv.id === id);
 
@@ -86,9 +87,15 @@ export default function InvoiceDetailsScreen() {
     }
   };
 
-  const handlePrint = async () => {
+  const handleDownloadPdf = async () => {
     try {
-      setLoading(true);
+      setGeneratingPdf(true);
+      setError(null);
+
+      if (!invoice) {
+        throw new Error('Invoice not found');
+      }
+
       const { uri } = await Print.printToFileAsync({
         html: generateInvoiceHtml(),
         base64: false
@@ -100,8 +107,9 @@ export default function InvoiceDetailsScreen() {
       });
     } catch (err) {
       setError('Failed to generate invoice PDF');
+      console.error('PDF generation error:', err);
     } finally {
-      setLoading(false);
+      setGeneratingPdf(false);
     }
   };
 
@@ -280,7 +288,7 @@ export default function InvoiceDetailsScreen() {
           <Text style={styles.sectionTitle}>Preview</Text>
           <View style={styles.previewContainer}>
             <InvoicePreview
-              visible={false}
+              visible={true}
               onClose={() => {}}
               data={{
                 customerName: invoice.customer_name,
@@ -310,11 +318,17 @@ export default function InvoiceDetailsScreen() {
       <View style={styles.actions}>
         <TouchableOpacity
           style={[styles.actionButton, styles.printButton]}
-          onPress={handlePrint}
-          disabled={loading}
+          onPress={handleDownloadPdf}
+          disabled={generatingPdf}
         >
-          <Download size={20} color="#007AFF" />
-          <Text style={styles.actionButtonText}>Download PDF</Text>
+          {generatingPdf ? (
+            <ActivityIndicator size="small" color="#007AFF" />
+          ) : (
+            <>
+              <Download size={20} color="#007AFF" />
+              <Text style={styles.actionButtonText}>Download PDF</Text>
+            </>
+          )}
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -462,6 +476,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
     borderRadius: 8,
     overflow: 'hidden',
+    minHeight: 400,
   },
   actions: {
     backgroundColor: '#ffffff',
