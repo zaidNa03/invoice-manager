@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator
 import { useLocalSearchParams, router } from 'expo-router';
 import { useInvoices } from '@/contexts/InvoicesContext';
 import { useBusinessContext } from '@/contexts/BusinessContext';
-import { Share2, Trash2, CircleCheck, Circle, Clock, Ban } from 'lucide-react-native';
+import { Share2, Trash2, CircleCheck, Circle, Clock, Ban, Download } from 'lucide-react-native';
+import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import InvoicePreview from '../../../components/InvoicePreview';
 
@@ -85,8 +86,146 @@ export default function InvoiceDetailsScreen() {
     }
   };
 
-  const handleShare = async () => {
-    setShowPreview(true);
+  const handlePrint = async () => {
+    try {
+      setLoading(true);
+      const { uri } = await Print.printToFileAsync({
+        html: generateInvoiceHtml(),
+        base64: false
+      });
+      
+      await Sharing.shareAsync(uri, {
+        UTI: '.pdf',
+        mimeType: 'application/pdf'
+      });
+    } catch (err) {
+      setError('Failed to generate invoice PDF');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateInvoiceHtml = () => {
+    if (!invoice) return '';
+
+    const productsHtml = invoice.items.map(item => `
+      <tr>
+        <td style="padding: 12px; border-bottom: 1px solid #f1f1f1;">
+          <div style="display: flex; align-items: center;">
+            ${item.product_image_url ? `
+              <img src="${item.product_image_url}" 
+                   style="width: 40px; height: 40px; border-radius: 4px; margin-right: 12px; object-fit: cover;" />
+            ` : ''}
+            <span>${item.description}</span>
+          </div>
+        </td>
+        <td style="padding: 12px; border-bottom: 1px solid #f1f1f1; text-align: center;">
+          ${item.quantity}
+        </td>
+        <td style="padding: 12px; border-bottom: 1px solid #f1f1f1; text-align: right;">
+          ${item.currency_code} ${item.unit_price.toFixed(2)}
+        </td>
+        <td style="padding: 12px; border-bottom: 1px solid #f1f1f1; text-align: right;">
+          ${item.currency_code} ${(item.unit_price * item.quantity).toFixed(2)}
+        </td>
+      </tr>
+    `).join('');
+
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Invoice ${invoice.invoice_number}</title>
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+              line-height: 1.5;
+              color: #1a1a1a;
+              padding: 40px;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 40px;
+            }
+            th {
+              background-color: #007AFF;
+              color: #ffffff;
+              padding: 12px;
+              text-align: left;
+            }
+          </style>
+        </head>
+        <body>
+          <div style="margin-bottom: 40px;">
+            ${businessInfo?.logo_url ? `
+              <img src="${businessInfo.logo_url}" 
+                   style="width: 80px; height: 80px; border-radius: 8px; margin-bottom: 16px;" />
+            ` : ''}
+            <h1 style="color: #007AFF; font-size: 32px; margin-bottom: 8px;">
+              ${businessInfo?.business_name || ''}
+            </h1>
+            ${businessInfo?.address ? `
+              <p style="color: #666666; margin: 0;">
+                ${businessInfo.address}
+              </p>
+            ` : ''}
+          </div>
+          
+          <div style="margin-bottom: 40px;">
+            <h2 style="color: #007AFF; font-size: 20px; margin-bottom: 16px;">
+              Bill To
+            </h2>
+            <p style="margin: 0;">
+              <strong>${invoice.customer_name}</strong><br>
+              ${invoice.customer_email || ''}<br>
+              Due Date: ${invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : 'Not set'}
+            </p>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 50%;">Item</th>
+                <th style="width: 15%; text-align: center;">Quantity</th>
+                <th style="width: 15%; text-align: right;">Price</th>
+                <th style="width: 20%; text-align: right;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${productsHtml}
+            </tbody>
+          </table>
+
+          <div style="margin-left: auto; width: 300px;">
+            <div style="margin-bottom: 8px; display: flex; justify-content: space-between;">
+              <span style="color: #666666;">Subtotal</span>
+              <span>${invoice.items[0]?.currency_code} ${invoice.subtotal.toFixed(2)}</span>
+            </div>
+            <div style="margin-bottom: 8px; display: flex; justify-content: space-between;">
+              <span style="color: #666666;">Tax (${invoice.tax_rate || 0}%)</span>
+              <span>${invoice.items[0]?.currency_code} ${(invoice.tax_amount || 0).toFixed(2)}</span>
+            </div>
+            <div style="margin-top: 8px; padding-top: 8px; border-top: 2px solid #f1f1f1; display: flex; justify-content: space-between;">
+              <strong style="color: #007AFF;">Total</strong>
+              <strong style="color: #34C759;">
+                ${invoice.items[0]?.currency_code} ${invoice.total.toFixed(2)}
+              </strong>
+            </div>
+          </div>
+
+          ${invoice.notes ? `
+            <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f1f1f1;">
+              <h2 style="color: #007AFF; font-size: 20px; margin-bottom: 16px;">
+                Notes
+              </h2>
+              <p style="color: #666666; margin: 0;">${invoice.notes}</p>
+            </div>
+          ` : ''}
+        </body>
+      </html>
+    `;
   };
 
   if (!invoice) {
@@ -170,8 +309,17 @@ export default function InvoiceDetailsScreen() {
 
       <View style={styles.actions}>
         <TouchableOpacity
+          style={[styles.actionButton, styles.printButton]}
+          onPress={handlePrint}
+          disabled={loading}
+        >
+          <Download size={20} color="#007AFF" />
+          <Text style={styles.actionButtonText}>Download PDF</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={[styles.actionButton, styles.shareButton]}
-          onPress={handleShare}
+          onPress={() => setShowPreview(true)}
           disabled={loading}
         >
           <Share2 size={20} color="#007AFF" />
@@ -331,6 +479,9 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     gap: 8,
+  },
+  printButton: {
+    backgroundColor: '#f0f9ff',
   },
   shareButton: {
     backgroundColor: '#f0f9ff',
